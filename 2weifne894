@@ -1,0 +1,169 @@
+local UI = loadstring(game:HttpGet("https://raw.githubusercontent.com/TheQuackKH/Main/main/compact"))()
+UI = UI.init("Inf Hunger & Thirst", "v1.0.0", "INF_LOOP")
+
+-- Toggles State
+local infHungerActive = false
+local infThirstActive = false
+
+-- Forward declaration of functions to avoid "attempt to call nil value" errors
+local startInfHungerLoop
+local startInfThirstLoop
+
+-- Character
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local function getCharacter()
+    return player.Character or player.CharacterAdded:Wait()
+end
+
+-- Move fern's Leaf part to player and return it
+local function moveFernLeafToPlayer()
+    local character = getCharacter()
+    local humanoidRootPart = character and character:FindFirstChild("HumanoidRootPart")
+
+    if not humanoidRootPart then
+        print("Player or HumanoidRootPart not found!")
+        return nil
+    end
+
+    -- Dynamically search for a Leaf part
+    local regFernFolder = workspace:FindFirstChild("GameMap")
+        and workspace.GameMap:FindFirstChild("Gameland")
+        and workspace.GameMap.Gameland:FindFirstChild("Props")
+        and workspace.GameMap.Gameland.Props:FindFirstChild("RegFern")
+    if not regFernFolder then
+        print("RegFern folder not found!")
+        return nil
+    end
+
+    for _, fern in ipairs(regFernFolder:GetChildren()) do
+        if fern:FindFirstChild("Leaf") then
+            local leaf = fern.Leaf
+            leaf.CFrame = humanoidRootPart.CFrame -- Move the Leaf part to the player's position
+            leaf.Transparency = 1 -- Make the Leaf part invisible
+            print("Dynamically found and moved Leaf:", leaf.Name)
+            return leaf
+        end
+    end
+
+    print("No available fern Leaf part found!")
+    return nil -- No available fern's Leaf part
+end
+
+-- Move water part to player, make it invisible, and return it
+local function moveWaterToPlayer()
+    local character = getCharacter()
+    local humanoidRootPart = character and character:FindFirstChild("HumanoidRootPart")
+
+    if not humanoidRootPart then
+        print("Player or HumanoidRootPart not found!")
+        return nil
+    end
+
+    local waterFolder = workspace:FindFirstChild("GameMap"):FindFirstChild("Water")
+    if not waterFolder then
+        print("Water folder not found!")
+        return nil
+    end
+
+    for _, water in ipairs(waterFolder:GetChildren()) do
+        if water:IsA("BasePart") then
+            water.CFrame = humanoidRootPart.CFrame -- Move the Water part to the player's position
+            water.Transparency = 1 -- Make the Water part invisible
+            print("Dynamically found and moved Water:", water.Name)
+            return water
+        end
+    end
+
+    print("No available Water part found!")
+    return nil -- No available Water part
+end
+
+-- Inf Hunger loop (following player continuously)
+function startInfHungerLoop()
+    infHungerActive = true
+    print("Inf Hunger loop started.")
+
+    local selectedFernLeaf = moveFernLeafToPlayer()
+    if not selectedFernLeaf then
+        print("No fern Leaf available. Stopping Inf Hunger loop.")
+        infHungerActive = false
+        return
+    end
+
+    while infHungerActive do
+        local humanoidRootPart = getCharacter():FindFirstChild("HumanoidRootPart")
+        if humanoidRootPart then
+            selectedFernLeaf.CFrame = humanoidRootPart.CFrame
+        end
+
+        local args = {
+            selectedFernLeaf,
+            selectedFernLeaf.CFrame.Position
+        }
+        workspace:WaitForChild("GameEvents"):WaitForChild("EatPlant"):FireServer(unpack(args))
+
+        task.wait(0.1)
+    end
+
+    print("Inf Hunger loop stopped.")
+end
+
+-- Inf Thirst loop (following player continuously)
+function startInfThirstLoop()
+    infThirstActive = true
+    print("Inf Thirst loop started.")
+
+    local selectedWaterPart = moveWaterToPlayer()
+    if not selectedWaterPart then
+        print("No Water part available. Stopping Inf Thirst loop.")
+        infThirstActive = false
+        return
+    end
+
+    while infThirstActive do
+        local humanoidRootPart = getCharacter():FindFirstChild("HumanoidRootPart")
+        if humanoidRootPart then
+            selectedWaterPart.CFrame = humanoidRootPart.CFrame
+        end
+
+        local args = {
+            selectedWaterPart,
+            selectedWaterPart.CFrame.Position
+        }
+        workspace:WaitForChild("GameEvents"):WaitForChild("addThirst"):FireServer(unpack(args))
+
+        task.wait(0.1)
+    end
+
+    print("Inf Thirst loop stopped.")
+end
+
+-- GUI Setup
+local MainTab = UI:AddTab("Main", "Inf Hunger & Thirst Controls") do
+    local Section = MainTab:AddSeperator("Toggles") do
+        Section:AddToggle({
+            title = "Inf Hunger",
+            desc = "Enable or disable the Inf Hunger loop",
+            callback = function(state)
+                if state then
+                    task.spawn(startInfHungerLoop)
+                else
+                    infHungerActive = false
+                end
+            end
+        })
+
+        Section:AddToggle({
+            title = "Inf Thirst",
+            desc = "Enable or disable the Inf Thirst loop",
+            callback = function(state)
+                if state then
+                    task.spawn(startInfThirstLoop)
+                else
+                    infThirstActive = false
+                end
+            end
+        })
+    end
+end

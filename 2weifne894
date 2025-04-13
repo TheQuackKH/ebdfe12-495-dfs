@@ -1,5 +1,5 @@
 local UI = loadstring(game:HttpGet("https://raw.githubusercontent.com/TheQuackKH/Main/main/compact"))()
-UI = UI.init("Inf Hunger & Thirst", "v1.0.0", "INF_LOOP")
+UI = UI.init("Inf Hunger & Thirst", "v1.0.0", "LOL")
 
 -- Toggles State
 local infHungerActive = false

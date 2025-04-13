@@ -11,9 +11,22 @@ local startInfThirstLoop
 
 -- Character
 local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 local function getCharacter()
     return player.Character or player.CharacterAdded:Wait()
+end
+
+-- Tween function to move parts towards player
+local function tweenPartToPlayer(part, targetPosition)
+    local tweenInfo = TweenInfo.new(
+        (part.Position - targetPosition).Magnitude / 300, -- Speed of 300
+        Enum.EasingStyle.Linear
+    )
+    local goal = {CFrame = CFrame.new(targetPosition)}
+    local tween = TweenService:Create(part, tweenInfo, goal)
+    tween:Play()
+    tween.Completed:Wait()
 end
 
 -- Move fern's Leaf part to player and return it
@@ -39,7 +52,7 @@ local function moveFernLeafToPlayer()
     for _, fern in ipairs(regFernFolder:GetChildren()) do
         if fern:FindFirstChild("Leaf") then
             local leaf = fern.Leaf
-            leaf.CFrame = humanoidRootPart.CFrame -- Move the Leaf part to the player's position
+            tweenPartToPlayer(leaf, humanoidRootPart.Position) -- Tween the leaf towards the player
             leaf.Transparency = 1 -- Make the Leaf part invisible
             print("Dynamically found and moved Leaf:", leaf.Name)
             return leaf
@@ -68,7 +81,7 @@ local function moveWaterToPlayer()
 
     for _, water in ipairs(waterFolder:GetChildren()) do
         if water:IsA("BasePart") then
-            water.CFrame = humanoidRootPart.CFrame -- Move the Water part to the player's position
+            tweenPartToPlayer(water, humanoidRootPart.Position) -- Tween the water towards the player
             water.Transparency = 1 -- Make the Water part invisible
             print("Dynamically found and moved Water:", water.Name)
             return water
